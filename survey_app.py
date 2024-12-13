@@ -146,7 +146,7 @@ def calculate_results(scores):
             import os
             
             font_url = "https://github.com/googlefonts/nanum-gothic/blob/main/fonts/NanumGothic-Regular.ttf?raw=true"
-            font_path = "NanumGothic-Regular.ttf"
+            font_path = "NanumGothic.ttf"
             
             if not os.path.exists(font_path):
                 urllib.request.urlretrieve(font_url, font_path)
