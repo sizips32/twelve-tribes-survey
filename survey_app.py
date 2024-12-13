@@ -61,7 +61,7 @@ def conduct_survey():
 
     scores = {tribe: 0 for tribe in questions}
 
-    st.title("열두지파 성격 유형 설문조사")
+    st.title("열두지파 성품 유형 설문조사")
     st.write("다음 질문에 대해 1-5점으로 답해주세요 (1: 전혀 그렇지 않다, 5: 매우 그렇다)")
 
     for tribe, tribe_questions in questions.items():  # tribe와 questions를 함께 순회
