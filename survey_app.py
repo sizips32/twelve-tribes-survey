@@ -79,7 +79,7 @@ def calculate_results(scores):
     sorted_tribes = sorted(averages.items(), key=lambda item: item[1], reverse=True)
 
     st.subheader("설문 결과")
-    st.write("최고점 및 최저점 지파 결���를 보여줍니다:")
+    st.write("최고점 및 최저점 지파 결과를 보여줍니다:")
 
     # 최고점 상위 2개
     top_tribes = sorted_tribes[:2]
