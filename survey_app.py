@@ -2,6 +2,8 @@ import streamlit as st
 import matplotlib.pyplot as plt
 from matplotlib import rc
 import os
+import platform
+import matplotlib.font_manager as fm
 
 def conduct_survey():
     """설문조사를 실시하고 결과를 반환합니다."""
@@ -77,7 +79,7 @@ def calculate_results(scores):
     sorted_tribes = sorted(averages.items(), key=lambda item: item[1], reverse=True)
 
     st.subheader("설문 결과")
-    st.write("최고점 및 최저점 지파 결과를 보여줍니다:")
+    st.write("최고점 및 최저점 지파 결���를 보여줍니다:")
 
     # 최고점 상위 2개
     top_tribes = sorted_tribes[:2]
@@ -125,21 +127,34 @@ def calculate_results(scores):
     scores = list(averages.values())
 
     # 한글 폰트 설정
-    import platform
-    
     if platform.system() == 'Darwin':  # macOS
         plt.rcParams['font.family'] = 'AppleGothic'
     elif platform.system() == 'Windows':
         plt.rcParams['font.family'] = 'Malgun Gothic'
-    else:  # Linux
-        try:
-            import matplotlib.font_manager as fm
-            font_path = '/usr/share/fonts/truetype/nanum/NanumGothic.ttf'
-            font_prop = fm.FontProperties(fname=font_path)
-            plt.rcParams['font.family'] = 'NanumGothic'
-        except:
-            plt.rcParams['font.family'] = 'NanumGothic'
-    
+    else:  # Linux 또는 기타 환경
+        # NanumGothic 폰트 파일 직접 지정
+        font_dirs = ['/usr/share/fonts/truetype/nanum/', '.']  # 현재 디렉토리도 검색
+        font_files = fm.findSystemFonts(fontpaths=font_dirs)
+        
+        for font_file in font_files:
+            if 'NanumGothic' in font_file:
+                font_path = font_file
+                break
+        else:
+            # 폰트 파일이 없는 경우 다운로드
+            import urllib.request
+            import os
+            
+            font_url = "https://github.com/googlefonts/nanum-gothic/blob/main/fonts/NanumGothic-Regular.ttf?raw=true"
+            font_path = "NanumGothic-Regular.ttf"
+            
+            if not os.path.exists(font_path):
+                urllib.request.urlretrieve(font_url, font_path)
+        
+        font_prop = fm.FontProperties(fname=font_path)
+        plt.rcParams['font.family'] = 'NanumGothic'
+        fm.fontManager.addfont(font_path)
+
     plt.rcParams['axes.unicode_minus'] = False
 
     fig, ax = plt.subplots()
