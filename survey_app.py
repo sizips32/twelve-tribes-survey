@@ -217,10 +217,11 @@ def conduct_survey():
 
     scores = {tribe: 0 for tribe in questions}
 
+    question_number = 1
     for tribe, tribe_questions in questions.items():
-        st.subheader(tribe)
         for question in tribe_questions:
-            scores[tribe] += st.slider(f"{question}", 1, 5, 3)
+            scores[tribe] += st.slider(f"질문 {question_number}: {question}", 1, 5, 3)
+            question_number += 1
 
     if st.button("결과 출력"):
         calculate_results(scores)
