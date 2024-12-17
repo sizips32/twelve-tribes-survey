@@ -1,10 +1,37 @@
+# -*- coding: utf-8 -*-
+
 import streamlit as st
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
 from matplotlib.patches import Rectangle
+import platform
+import os
 
-def display_sidebar_traits():
-    """사이드바에 각 지파의 이름, 특성, 성경구절, 대표인물을 표시합니다."""
-    traits = {
+def load_korean_font():
+    """환경에 맞는 한글 폰트를 설정합니다."""
+    if platform.system() == 'Darwin':  # macOS
+        plt.rcParams['font.family'] = 'AppleGothic'
+    elif platform.system() == 'Windows':
+        plt.rcParams['font.family'] = 'Malgun Gothic'
+    else:  # Linux 또는 기타
+        font_dirs = ['/usr/share/fonts/truetype/nanum/', '.']
+        font_files = fm.findSystemFonts(fontpaths=font_dirs)
+        font_path = next((file for file in font_files if 'NanumGothic' in file), None)
+        
+        if not font_path:
+            # 폰트를 다운로드
+            font_url = "https://github.com/googlefonts/nanum-gothic/blob/main/fonts/NanumGothic-Regular.ttf?raw=true"
+            font_path = "NanumGothic.ttf"
+            if not os.path.exists(font_path):
+                import urllib.request
+                urllib.request.urlretrieve(font_url, font_path)
+        
+        fm.fontManager.addfont(font_path)
+        plt.rcParams['font.family'] = 'NanumGothic'
+
+    plt.rcParams['axes.unicode_minus'] = False
+
+traits = {
     "유다": {
         "성품": "리더십과 용기",
         "본성": "타락과 탐욕 (창 38장 - 다말과의 부적절한 관계)",
@@ -78,17 +105,52 @@ def display_sidebar_traits():
         "대표인물": "기드온, 야일"
     },
 }
-    st.sidebar.title("지파별 특성")
-    for tribe, data in traits.items():
-        st.sidebar.write(f"### {tribe}")
-        st.sidebar.write(f"- 성품: {data['성품']}")
-        st.sidebar.write(f"- 본성: {data['본성']}")
-        st.sidebar.write(f"- 성경구절: {data['성경구절']}")
-        st.sidebar.write(f"- 대표인물: {data['대표인물']}")
 
+def display_swot_in_sidebar(top_tribes, bottom_tribes):
+    """SWOT 분석 해당 지파를 사이드바 최상단에 상세히 표시"""
+    st.sidebar.title("SWOT 지파 특성 상세보기")
+
+    # 추가적인 안내 문구
+    st.sidebar.write("아래는 이번 설문 결과를 바탕으로 선정된 네 지파의 특징입니다.")
+    st.sidebar.write("각 지파별로 성품, 본성, 관련 성경구절 및 대표인물을 보여줍니다.\n")
+
+    # 강점 지파
+    st.sidebar.subheader("강점 (Strength)")
+    top_str = top_tribes[0][0]
+    st.sidebar.markdown(f"**지파명:** {top_str}")
+    st.sidebar.write(f"**성품:** {traits[top_str]['성품']}")
+    st.sidebar.write(f"**본성:** {traits[top_str]['본성']}")
+    st.sidebar.write(f"**성경구절:** {traits[top_str]['성경구절']}")
+    st.sidebar.write(f"**대표인물:** {traits[top_str]['대표인물']}")
+
+    # 기회 지파
+    st.sidebar.subheader("기회 (Opportunity)")
+    top_opp = top_tribes[1][0]
+    st.sidebar.markdown(f"**지파명:** {top_opp}")
+    st.sidebar.write(f"**성품:** {traits[top_opp]['성품']}")
+    st.sidebar.write(f"**본성:** {traits[top_opp]['본성']}")
+    st.sidebar.write(f"**성경구절:** {traits[top_opp]['성경구절']}")
+    st.sidebar.write(f"**대표인물:** {traits[top_opp]['대표인물']}")
+
+    # 약점 지파
+    st.sidebar.subheader("약점 (Weakness)")
+    bottom_weak = bottom_tribes[0][0]
+    st.sidebar.markdown(f"**지파명:** {bottom_weak}")
+    st.sidebar.write(f"**성품:** {traits[bottom_weak]['성품']}")
+    st.sidebar.write(f"**본성:** {traits[bottom_weak]['본성']}")
+    st.sidebar.write(f"**성경구절:** {traits[bottom_weak]['성경구절']}")
+    st.sidebar.write(f"**대표인물:** {traits[bottom_weak]['대표인물']}")
+
+    # 위협 지파
+    st.sidebar.subheader("위협 (Threat)")
+    bottom_threat = bottom_tribes[1][0]
+    st.sidebar.markdown(f"**지파명:** {bottom_threat}")
+    st.sidebar.write(f"**성품:** {traits[bottom_threat]['성품']}")
+    st.sidebar.write(f"**본성:** {traits[bottom_threat]['본성']}")
+    st.sidebar.write(f"**성경구절:** {traits[bottom_threat]['성경구절']}")
+    st.sidebar.write(f"**대표인물:** {traits[bottom_threat]['대표인물']}")
 
 def plot_survey_results(scores):
-    """설문조사 결과를 막대그래프로 시각화합니다."""
     fig, ax = plt.subplots(figsize=(10, 6))
     tribes = list(scores.keys())
     values = list(scores.values())
@@ -101,9 +163,7 @@ def plot_survey_results(scores):
     plt.tight_layout()
     st.pyplot(fig)
 
-
 def display_swot_analysis_graph(top_tribes, bottom_tribes):
-    """SWOT 분석을 사분면 그래프로 시각화하며 지정된 문구를 다음 행에 배치합니다."""
     strengths_map = {
         "유다": "리더십과 용기", "갓": "믿음과 영적 전쟁", "베냐민": "끈기와 열정",
         "르우벤": "열정과 회복", "시므온": "열정적 복음 전파", "납달리": "소통과 온화함",
@@ -134,9 +194,7 @@ def display_swot_analysis_graph(top_tribes, bottom_tribes):
     ax.axis('off')
     st.pyplot(fig)
 
-
 def calculate_results(scores):
-    """점수를 계산하고 결과를 출력합니다."""
     averages = {tribe: total / 2 for tribe, total in scores.items()}
     sorted_tribes = sorted(averages.items(), key=lambda item: item[1], reverse=True)
     top_tribes = sorted_tribes[:2]
@@ -149,8 +207,8 @@ def calculate_results(scores):
     for tribe, average in bottom_tribes:
         st.write(f"**최저점 지파 - {tribe}:** 평균 {average:.2f}점")
 
-    # 사이드바에 전체 지파 정보 표시
-    display_sidebar_traits()
+    # 사이드바 최상단에 SWOT 해당 지파의 특성 상세 표시
+    display_swot_in_sidebar(top_tribes, bottom_tribes)
 
     # 설문조사 결과 그래프 출력
     plot_survey_results(scores)
@@ -158,19 +216,17 @@ def calculate_results(scores):
     # SWOT 분석 그래프 출력
     display_swot_analysis_graph(top_tribes, bottom_tribes)
 
-
 def conduct_survey():
-    """설문조사를 통해 사용자가 각 지파에 대해 점수를 입력합니다."""
     st.title("열두 지파 성품 설문조사")
     st.write("각 항목에 대해 1에서 5점 사이로 점수를 입력해주세요.")
     
     questions = {
         "유다": [
             "나는 위기 상황이 닥쳤을 때, 주저하지 않고 앞장서서 해결하려는 경향이 있다.",
-            "나는 어려움에 처한 사람을 보면, 기꺼이 나를 희생하여 돕고자 한다.",
+            "나는 어려움에 처한 사람 보면, 기꺼이 나를 희생하여 돕고자 한다.",
         ],
         "르우벤": [
-            "나는 새로운 일을 시작할 때, 쉽게 의욕이 넘치고 열정적으로 임하는 편이다.",
+            "나는 새로운 일을 시작할 때, 쉽게 의욕이 넘치고 정적으로 임하는 편이다.",
             "나는 과거의 잘못을 돌아보고, 그것으로부터 교훈을 얻어 성장하려 노력한다.",
         ],
         "스불론": [
@@ -217,6 +273,9 @@ def conduct_survey():
 
     scores = {tribe: 0 for tribe in questions}
 
+    if 'show_results' not in st.session_state:
+        st.session_state['show_results'] = False
+
     question_number = 1
     for tribe, tribe_questions in questions.items():
         for question in tribe_questions:
@@ -224,8 +283,13 @@ def conduct_survey():
             question_number += 1
 
     if st.button("결과 출력"):
+        st.session_state['show_results'] = True
         calculate_results(scores)
 
+    # 결과 출력 전까지 사이드바 비움
+    if not st.session_state['show_results']:
+        st.sidebar.empty()
 
 if __name__ == "__main__":
+    load_korean_font()
     conduct_survey()
