@@ -1,20 +1,232 @@
+# -*- coding: utf-8 -*-
+
 import streamlit as st
 import matplotlib.pyplot as plt
-from matplotlib import rc
-import os
-import platform
 import matplotlib.font_manager as fm
+from matplotlib.patches import Rectangle
+import platform
+import os
+
+def load_korean_font():
+    """환경에 맞는 한글 폰트를 설정합니다."""
+    if platform.system() == 'Darwin':  # macOS
+        plt.rcParams['font.family'] = 'AppleGothic'
+    elif platform.system() == 'Windows':
+        plt.rcParams['font.family'] = 'Malgun Gothic'
+    else:  # Linux 또는 기타
+        font_dirs = ['/usr/share/fonts/truetype/nanum/', '.']
+        font_files = fm.findSystemFonts(fontpaths=font_dirs)
+        font_path = next((file for file in font_files if 'NanumGothic' in file), None)
+        
+        if not font_path:
+            # 폰트를 다운로드
+            font_url = "https://github.com/googlefonts/nanum-gothic/blob/main/fonts/NanumGothic-Regular.ttf?raw=true"
+            font_path = "NanumGothic.ttf"
+            if not os.path.exists(font_path):
+                import urllib.request
+                urllib.request.urlretrieve(font_url, font_path)
+        
+        fm.fontManager.addfont(font_path)
+        plt.rcParams['font.family'] = 'NanumGothic'
+
+    plt.rcParams['axes.unicode_minus'] = False
+
+traits = {
+    "유다": {
+        "성품": "리더십과 용기",
+        "본성": "타락과 탐욕 (창 38장 - 다말과의 부적절한 관계)",
+        "성경구절": "창 49:9",
+        "대표인물": "다윗,솔로몬,갈렙"
+    },
+    "르우벤": {
+        "성품": "열정과 회복",
+        "본성": "충동적 행동과 불안정성 (창 49:4 - 빌하와의 관계로 인해 맏아들의 권리를 상실함)",
+        "성경구절": "창 49:3",
+        "대표인물": "르우벤"
+    },
+    "스불론": {
+        "성품": "사교성과 나눔",
+        "본성": "세속적 유혹에 취약 (이방 문화에 쉽게 동화될 가능성)",
+        "성경구절": "창 49:13",
+        "대표인물": "사사 엘론"
+    },
+    "잇사갈": {
+        "성품": "성실함과 감사",
+        "본성": "지나친 타협과 안일함 (창 49:15 - 편안함을 위해 종이 되는 선택)",
+        "성경구절": "창 49:14",
+        "대표인물": "바락"
+    },
+    "갓": {
+        "성품": "믿음과 영적 전쟁",
+        "본성": "끊임없는 갈등 (전쟁의 삶으로 인해 평화가 부족함)",
+        "성경구절": "창 49:19",
+        "대표인물": "엘리야"
+    },
+    "아셀": {
+        "성품": "섬김과 기쁨",
+        "본성": "나태함과 안락함 추구 (창 49:20 - 물질적 풍요에 지나치게 의존할 가능성)",
+        "성경구절": "창 49:20",
+        "대표인물": "안나 여선지자"
+    },
+    "납달리": {
+        "성품": "소통과 온화함",
+        "본성": "우유부단함 (결정 상황에서 흔들릴 가능성)",
+        "성경구절": "창 49:21",
+        "대표인물": "바락"
+    },
+    "레위": {
+        "성품": "신앙과 순종",
+        "본성": "잔혹함과 과도한 열정 (창 49:5-7 - 세겜 사건에서의 폭력적인 복수)",
+        "성경구절": "창 49:7",
+        "대표인물": "모세, 아론"
+    },
+    "요셉": {
+        "성품": "긍정적 영향과 나눔",
+        "본성": "과도한 이상주의 (현실적 문제를 간과할 가능성)",
+        "성경구절": "창 49:22",
+        "대표인물": "여호수아, 드보라"
+    },
+    "베냐민": {
+        "성품": "끈기와 열정",
+        "본성": "파괴적 열정 (창 49:27 - 전투와 경쟁심이 지나칠 가능성)",
+        "성경구절": "창 49:27",
+        "대표인물": "사도 바울"
+    },
+    "시므온": {
+        "성품": "열정적 복음 전파",
+        "본성": "폭력적 성향 (창 49:5 - 세겜 사건에서의 과도한 복수)",
+        "성경구절": "창 49:7",
+        "대표인물": "시므온"
+    },
+    "므낫세": {
+        "성품": "장기 계획과 충성",
+        "본성": "강한 독립심으로 인한 분열 가능성 (공동체 조화를 깨뜨릴 위험)",
+        "성경구절": "창 48:19",
+        "대표인물": "기드온, 야일"
+    },
+}
+
+def display_swot_in_sidebar(top_tribes, bottom_tribes):
+    """SWOT 분석 해당 지파를 사이드바 최상단에 상세히 표시"""
+    st.sidebar.title("SWOT 지파 특성 상세보기")
+
+    # 추가적인 안내 문구
+    st.sidebar.write("아래는 이번 설문 결과를 바탕으로 선정된 네 지파의 특징입니다.")
+    st.sidebar.write("각 지파별로 성품, 본성, 관련 성경구절 및 대표인물을 보여줍니다.\n")
+
+    # 강점 지파
+    st.sidebar.subheader("강점 (Strength)")
+    top_str = top_tribes[0][0]
+    st.sidebar.markdown(f"**지파명:** {top_str}")
+    st.sidebar.write(f"**성품:** {traits[top_str]['성품']}")
+    st.sidebar.write(f"**본성:** {traits[top_str]['본성']}")
+    st.sidebar.write(f"**성경구절:** {traits[top_str]['성경구절']}")
+    st.sidebar.write(f"**대표인물:** {traits[top_str]['대표인물']}")
+
+    # 기회 지파
+    st.sidebar.subheader("기회 (Opportunity)")
+    top_opp = top_tribes[1][0]
+    st.sidebar.markdown(f"**지파명:** {top_opp}")
+    st.sidebar.write(f"**성품:** {traits[top_opp]['성품']}")
+    st.sidebar.write(f"**본성:** {traits[top_opp]['본성']}")
+    st.sidebar.write(f"**성경구절:** {traits[top_opp]['성경구절']}")
+    st.sidebar.write(f"**대표인물:** {traits[top_opp]['대표인물']}")
+
+    # 약점 지파
+    st.sidebar.subheader("약점 (Weakness)")
+    bottom_weak = bottom_tribes[0][0]
+    st.sidebar.markdown(f"**지파명:** {bottom_weak}")
+    st.sidebar.write(f"**성품:** {traits[bottom_weak]['성품']}")
+    st.sidebar.write(f"**본성:** {traits[bottom_weak]['본성']}")
+    st.sidebar.write(f"**성경구절:** {traits[bottom_weak]['성경구절']}")
+    st.sidebar.write(f"**대표인물:** {traits[bottom_weak]['대표인물']}")
+
+    # 위협 지파
+    st.sidebar.subheader("위협 (Threat)")
+    bottom_threat = bottom_tribes[1][0]
+    st.sidebar.markdown(f"**지파명:** {bottom_threat}")
+    st.sidebar.write(f"**성품:** {traits[bottom_threat]['성품']}")
+    st.sidebar.write(f"**본성:** {traits[bottom_threat]['본성']}")
+    st.sidebar.write(f"**성경구절:** {traits[bottom_threat]['성경구절']}")
+    st.sidebar.write(f"**대표인물:** {traits[bottom_threat]['대표인물']}")
+
+def plot_survey_results(scores):
+    fig, ax = plt.subplots(figsize=(10, 6))
+    tribes = list(scores.keys())
+    values = list(scores.values())
+
+    ax.bar(tribes, values, color="skyblue")
+    ax.set_title("설문조사 결과", fontsize=16)
+    ax.set_xlabel("지파", fontsize=12)
+    ax.set_ylabel("점수 합계", fontsize=12)
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    st.pyplot(fig)
+
+def display_swot_analysis_graph(top_tribes, bottom_tribes):
+    strengths_map = {
+        "유다": "리더십과 용기", "갓": "믿음과 영적 전쟁", "베냐민": "끈기와 열정",
+        "르우벤": "열정과 회복", "시므온": "열정적 복음 전파", "납달리": "소통과 온화함",
+        "스불론": "사교성과 나눔", "아셀": "섬김과 기쁨", "요셉": "긍정적 영향과 나눔",
+        "잇사갈": "성실함과 감사", "레위": "신앙과 순종", "므낫세": "장기 계획과 충성"
+    }
+    
+    swot_data = {
+        "강점 (Strengths)": f"{top_tribes[0][0]}: {strengths_map[top_tribes[0][0]]}\n이(가) 빛납니다.",
+        "기회 (Opportunities)": f"{top_tribes[1][0]}: {strengths_map[top_tribes[1][0]]}\n이(가) 돋보입니다.",
+        "약점 (Weaknesses)": f"{bottom_tribes[0][0]}: {strengths_map[bottom_tribes[0][0]]}\n을(를) 더욱 발전시키면 좋겠습니다.",
+        "위협 (Threats)": f"{bottom_tribes[1][0]}: {strengths_map[bottom_tribes[1][0]]}\n이(가) 많이 부족합니다.",
+    }
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.add_patch(Rectangle((0, 0.5), 0.5, 0.5, edgecolor='black', facecolor='lightgreen', lw=2))
+    ax.add_patch(Rectangle((0.5, 0.5), 0.5, 0.5, edgecolor='black', facecolor='lightcoral', lw=2))
+    ax.add_patch(Rectangle((0, 0), 0.5, 0.5, edgecolor='black', facecolor='lightskyblue', lw=2))
+    ax.add_patch(Rectangle((0.5, 0), 0.5, 0.5, edgecolor='black', facecolor='lightyellow', lw=2))
+
+    ax.text(0.25, 0.75, f"강점\n{swot_data['강점 (Strengths)']}", ha='center', va='center', fontsize=10)
+    ax.text(0.75, 0.75, f"약점\n{swot_data['약점 (Weaknesses)']}", ha='center', va='center', fontsize=10)
+    ax.text(0.25, 0.25, f"기회\n{swot_data['기회 (Opportunities)']}", ha='center', va='center', fontsize=10)
+    ax.text(0.75, 0.25, f"위협\n{swot_data['위협 (Threats)']}", ha='center', va='center', fontsize=10)
+
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis('off')
+    st.pyplot(fig)
+
+def calculate_results(scores):
+    averages = {tribe: total / 2 for tribe, total in scores.items()}
+    sorted_tribes = sorted(averages.items(), key=lambda item: item[1], reverse=True)
+    top_tribes = sorted_tribes[:2]
+    bottom_tribes = sorted_tribes[-2:]
+
+    st.subheader("설문 결과")
+    st.write("최고점 및 최저점 지파 결과를 보여줍니다:")
+    for tribe, average in top_tribes:
+        st.write(f"**최고점 지파 - {tribe}:** 평균 {average:.2f}점")
+    for tribe, average in bottom_tribes:
+        st.write(f"**최저점 지파 - {tribe}:** 평균 {average:.2f}점")
+
+    # 사이드바 최상단에 SWOT 해당 지파의 특성 상세 표시
+    display_swot_in_sidebar(top_tribes, bottom_tribes)
+
+    # 설문조사 결과 그래프 출력
+    plot_survey_results(scores)
+
+    # SWOT 분석 그래프 출력
+    display_swot_analysis_graph(top_tribes, bottom_tribes)
 
 def conduct_survey():
-    """설문조사를 실시하고 결과를 반환합니다."""
-
+    st.title("열두 지파 성품 설문조사")
+    st.write("각 항목에 대해 1에서 5점 사이로 점수를 입력해주세요.")
+    
     questions = {
         "유다": [
             "나는 위기 상황이 닥쳤을 때, 주저하지 않고 앞장서서 해결하려는 경향이 있다.",
-            "나는 어려움에 처한 사람을 보면, 기꺼이 나를 희생하여 돕고자 한다.",
+            "나는 어려움에 처한 사람 보면, 기꺼이 나를 희생하여 돕고자 한다.",
         ],
         "르우벤": [
-            "나는 새로운 일을 시작할 때, 쉽게 의욕이 넘치고 열정적으로 임하는 편이다.",
+            "나는 새로운 일을 시작할 때, 쉽게 의욕이 넘치고 정적으로 임하는 편이다.",
             "나는 과거의 잘못을 돌아보고, 그것으로부터 교훈을 얻어 성장하려 노력한다.",
         ],
         "스불론": [
@@ -61,145 +273,23 @@ def conduct_survey():
 
     scores = {tribe: 0 for tribe in questions}
 
-    st.title("열두지파 성격 유형 설문조사")
-    st.write("다음 질문에 대해 1-5점으로 답해주세요 (1: 전혀 그렇지 않다, 5: 매우 그렇다)")
+    if 'show_results' not in st.session_state:
+        st.session_state['show_results'] = False
 
+    question_number = 1
     for tribe, tribe_questions in questions.items():
-        st.subheader(tribe)
-        for i, question in enumerate(tribe_questions):
-            score = st.slider(f"{question}", 1, 5, 3, key=f"{tribe}_{i}")
-            scores[tribe] += score
+        for question in tribe_questions:
+            scores[tribe] += st.slider(f"질문 {question_number}: {question}", 1, 5, 3)
+            question_number += 1
 
-    return scores
+    if st.button("결과 출력"):
+        st.session_state['show_results'] = True
+        calculate_results(scores)
 
-def calculate_results(scores):
-    """점수를 계산하고 결과를 출력합니다."""
-
-    averages = {tribe: total / 2 for tribe, total in scores.items()}
-    sorted_tribes = sorted(averages.items(), key=lambda item: item[1], reverse=True)
-
-    st.subheader("설문 결과")
-    st.write("최고점 및 최저점 지파 결���를 보여줍니다:")
-
-    # 최고점 상위 2개
-    top_tribes = sorted_tribes[:2]
-    for tribe, average in top_tribes:
-        st.write(f"**최고점 지파 - {tribe}:** 평균 {average:.2f}점")
-
-    # 최저점 하위 2개
-    bottom_tribes = sorted_tribes[-2:]
-    for tribe, average in bottom_tribes:
-        st.write(f"**최저점 지파 - {tribe}:** 평균 {average:.2f}점")
-
-    st.write("각 지파별 특성과 권면")
-    advice = {
-        "유다": {"구절": "창 49:9", "권면": "유다는 사자와 같은 용맹과 헌신적 리더십을 발휘하여 어려움 속에서도 앞장서 나아갈 수 있습니다.", "대표인물": "다윗 (삼하 2:1), 예수 그리스도 (계 5:5)"},
-        
-        "르우벤": {"구절": "창 49:3", "권면": "르우벤은 열정적으로 새로운 일에 도전하며 회복을 통해 선한 영향력을 끼칠 수 있습니다.", "대표인물": "다단과 아비람 (민 16:1-35)"},
-        
-        "스불론": {"구절": "창 49:13", "권면": "스불론은 사교적이며 자원을 효율적으로 활용하여 다른 사람을 돕는 데 기여할 수 있습니다.", "대표인물": "입다의 사사 엘론 (삿 12:11)"},
-        
-        "잇사갈": {"구절": "창 49:14", "권면": "잇사갈은 성실함과 안정감으로 하나님께 감사하며 맡은 일을 끝까지 완수합니다.", "대표인물": "바락 (삿 4:6-10)"},
-        
-        "갓": {"구절": "창 49:19", "권면": "갓은 어려움 속에서도 하나님을 의지하며 영적 전쟁에서 승리합니다.", "대표인물": "엘리야 선지자 (왕상 17:1)"},
-        
-        "아셀": {"구절": "창 49:20", "권면": "아셀은 섬김과 영적 풍성함으로 다른 사람에게 기쁨과 평안을 제공합니다.", "대표인물": "안나 여선지자 (눅 2:36-38)"},
-        
-        "납달리": {"구절": "창 49:21", "권면": "납달리는 온화하고 명확한 소통으로 복음을 효과적으로 전달할 수 있습니다.", "대표인물": "바락 (삿 4:6-10)"},
-        
-        "레위": {"구절": "창 49:7", "권면": "레위는 말씀에 대한 순종과 회개를 통해 신앙의 본을 보일 수 있습니다.", "대표인물": "모세와 아론 (출 6:20)"},
-        
-        "요셉": {"구절": "창 49:22", "권면": "요셉은 긍정적 영향력과 나눔을 통해 다른 이들에게 물질적 도움을 줍니다.", "대표인물": "여호수아 (수 1:1-9), 드보라 (삿 4:4)"},
-        
-        "베냐민": {"구절": "창 49:27", "권면": "베냐민은 끈기와 열정을 가지고 복음을 전하며 끝까지 사명을 완수합니다.", "대표인물": "사도 바울 (행 9:1-31)"},
-        
-        "시므온": {"구절": "창 49:7", "권면": "시므온은 열정적인 성격으로 적극적으로 복음을 전하고 하나님의 말씀을 따르는 삶을 살아갑니다.", "대표인물": "시므온 (눅 2:25-35)"},
-        
-        "므낫세": {"구절": "창 48:19", "권면": "므낫세는 충성과 안정감을 바탕으로 선교 사역에 헌신하며 하나님께 영광을 돌립니다.", "대표인물": "기드온 (삿 6:11-16), 야일 (삿 10:3-5)"}
-    }
-
-    for tribe, data in advice.items():
-        st.write(f"**{tribe}:** (성경구절: {data['구절']}, 대표인물: {data['대표인물']}) {data['권면']}")
-
-    # 그래픽 출력
-    st.subheader("그래프로 보는 설문 결과")
-    tribes = list(averages.keys())
-    scores = list(averages.values())
-
-    # 한글 폰트 설정
-    if platform.system() == 'Darwin':  # macOS
-        plt.rcParams['font.family'] = 'AppleGothic'
-    elif platform.system() == 'Windows':
-        plt.rcParams['font.family'] = 'Malgun Gothic'
-    else:  # Linux 또는 기타 환경
-        # NanumGothic 폰트 파일 직접 지정
-        font_dirs = ['/usr/share/fonts/truetype/nanum/', '.']  # 현재 디렉토리도 검색
-        font_files = fm.findSystemFonts(fontpaths=font_dirs)
-        
-        for font_file in font_files:
-            if 'NanumGothic' in font_file:
-                font_path = font_file
-                break
-        else:
-            # 폰트 파일이 없는 경우 다운로드
-            import urllib.request
-            import os
-            
-            font_url = "https://github.com/googlefonts/nanum-gothic/blob/main/fonts/NanumGothic-Regular.ttf?raw=true"
-            font_path = "NanumGothic-Regular.ttf"
-            
-            if not os.path.exists(font_path):
-                urllib.request.urlretrieve(font_url, font_path)
-        
-        font_prop = fm.FontProperties(fname=font_path)
-        plt.rcParams['font.family'] = 'NanumGothic'
-        fm.fontManager.addfont(font_path)
-
-    plt.rcParams['axes.unicode_minus'] = False
-
-    fig, ax = plt.subplots()
-    ax.bar(tribes, scores, color='skyblue')
-    ax.set_xlabel('지파')
-    ax.set_ylabel('평균 점수')
-    ax.set_title('지파별 평균 점수')
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    st.pyplot(fig)
-
-    # 그래프 출력 이후에 추가
-    st.subheader("💪 강점 및 🔍 보완점")
-    
-    # 상위 2개 지파 기반 강점 분석
-    st.write("**💪 당신의 강점:**")
-    strengths = []
-    for tribe, score in top_tribes:
-        if tribe in ["유다", "갓", "베냐민"]:
-            strengths.append("리더십과 용기")
-        elif tribe in ["르우벤", "시므온", "납달리"]:
-            strengths.append("열정과 소통능력")
-        elif tribe in ["스불론", "아셀", "요셉"]:
-            strengths.append("나눔과 섬김")
-        elif tribe in ["잇사갈", "레위", "므낫세"]:
-            strengths.append("성실함과 신실함")
-    
-    st.write(", ".join(set(strengths[:2])) + "이(가) 돋보입니다.")
-    
-    # 하위 2개 지파 기반 보완점 제시
-    st.write("**🔍 보완이 필요한 영역:**")
-    improvements = []
-    for tribe, score in bottom_tribes:
-        if tribe in ["유다", "갓", "베냐민"]:
-            improvements.append("결단력과 책임감")
-        elif tribe in ["르우벤", "시므온", "납달리"]:
-            improvements.append("의사소통과 관계형성")
-        elif tribe in ["스불론", "아셀", "요셉"]:
-            improvements.append("나눔과 섬김의 자세")
-        elif tribe in ["잇사갈", "레위", "므낫세"]:
-            improvements.append("인내심과 충성")
-    
-    st.write(", ".join(set(improvements[:2])) + "을(를) 더욱 발전시키면 좋겠습니다.")
+    # 결과 출력 전까지 사이드바 비움
+    if not st.session_state['show_results']:
+        st.sidebar.empty()
 
 if __name__ == "__main__":
-    scores = conduct_survey()
-    if st.button("결과 확인"):
-        calculate_results(scores)
+    load_korean_font()
+    conduct_survey()
